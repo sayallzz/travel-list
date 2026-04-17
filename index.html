@@ -104,40 +104,41 @@
         }
 
         /* スライダー全体を横並びにする */
+        /* スライダー周辺のレイアウト修正 */
         .slider-wrapper {
-            display: flex;
+            display: grid;
+            /* スマホでは1段目に文字2つ、2段目にバーを配置 */
+            grid-template-areas: 
+                "label-left label-right"
+                "slider slider";
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 0;
             align-items: center;
-            justify-content: space-between;
             position: relative;
-            padding: 10px 0;
+            padding: 10px 0 20px 0;
         }
 
-        /* スライダーの両端にある文字の基本設定 */
         .slider-wrapper span {
-            width: 120px;
-            flex-shrink: 0;
             font-size: 0.75rem;
             color: var(--text-sub);
             white-space: nowrap;
         }
 
         .slider-wrapper span:first-of-type {
+            grid-area: label-left;
             text-align: left;
-            margin-right: 12px;
         }
 
         .slider-wrapper span:last-of-type {
+            grid-area: label-right;
             text-align: right;
-            margin-left: 12px;
         }
 
-        /* スライダー本体 */
         input[type="range"] {
-            flex: 1;
-            min-width: 0;
+            grid-area: slider;
+            width: 100%;
+            margin: 0;
             cursor: pointer;
-            
-            /* 目盛りを背景として描画 */
             background: repeating-linear-gradient(
                 to right,
                 var(--text-sub) 0px,
@@ -148,6 +149,22 @@
             background-size: 100% 6px;
             background-position: center;
             background-repeat: no-repeat;
+        }
+
+        /* PCサイズ（480px以上）の時は元の横並びに戻す */
+        @media (min-width: 480px) {
+            .slider-wrapper {
+                display: flex;
+                grid-template-areas: none;
+                padding: 10px 0;
+            }
+            .slider-wrapper span {
+                width: 120px;
+                flex-shrink: 0;
+            }
+            .slider-wrapper span:first-of-type { margin-right: 12px; }
+            .slider-wrapper span:last-of-type { margin-left: 12px; }
+            input[type="range"] { flex: 1; }
         }
 
         /* 相手の回答用マーカー */
@@ -542,22 +559,31 @@
             el.innerHTML = el.innerHTML.replace(' ★', '');
         });
 
-        // スライダーの比較
+
+        // スライダーの比較（画面幅に合わせて自動計算版）
         document.querySelectorAll('input[type="range"]').forEach(slider => {
             const val = params.get(slider.id);
             if (val) {
                 const wrapper = slider.parentElement;
-                const percent = ((val - 1) / 9) * 100;
                 
-                // CSSの文字幅(120px)と余白(12px)を基準に、丸の位置を計算
+                // その時のスライダーの実際の幅と、左端からの位置を測定
+                const sliderWidth = slider.offsetWidth;
+                const sliderLeft = slider.offsetLeft;
+                
+                // 10段階の位置を計算
+                const percent = (val - 1) / 9;
+                const positionX = sliderLeft + (sliderWidth * percent);
+                
+                // 丸（ドット）を作成
                 const dot = document.createElement('div');
                 dot.className = 'partner-dot';
-                dot.style.left = `calc(132px + (100% - 264px) * ${percent / 100})`;
+                dot.style.left = positionX + 'px';
                 
+                // 名前ラベルを作成
                 const label = document.createElement('div');
                 label.className = 'partner-label-tag';
                 label.textContent = partnerName;
-                label.style.left = dot.style.left;
+                label.style.left = positionX + 'px';
 
                 wrapper.appendChild(dot);
                 wrapper.appendChild(label);
