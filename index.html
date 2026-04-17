@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私好みの旅行価値観リスト</title>
+    <style>
+        :root {
+            --bg-color: #fdfcfb;
+            --card-bg: #ffffff;
+            --accent-soft: #e2e8f0;
+            --accent-main: #4a5568;
+            --accent-partner: #ed8936; /* 相手用の色（オレンジ） */
+            --text-main: #2d3748;
+            --text-sub: #718096;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            letter-spacing: 0.05em;
+            color: var(--accent-main);
+            margin-bottom: 8px;
+        }
+
+        .nickname-area {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .nickname-area label {
+            font-size: 0.8rem;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .nickname-area input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--accent-soft);
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            color: var(--accent-main);
+        }
+
+        .section-title::before {
+            content: "";
+            width: 4px;
+            height: 16px;
+            background: var(--accent-main);
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        .item {
+            margin-bottom: 30px;
+            position: relative; /* 相手の回答表示用 */
+        }
+
+        .item-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        /* スライダー全体を横並びにする */
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            padding: 10px 0;
+        }
+
+        /* スライダーの両端にある文字の基本設定 */
+        .slider-wrapper span {
+            width: 120px;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            white-space: nowrap;
+        }
+
+        .slider-wrapper span:first-of-type {
+            text-align: left;
+            margin-right: 12px;
+        }
+
+        .slider-wrapper span:last-of-type {
+            text-align: right;
+            margin-left: 12px;
+        }
+
+        /* スライダー本体 */
+        input[type="range"] {
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+            
+            /* 目盛りを背景として描画 */
+            background: repeating-linear-gradient(
+                to right,
+                var(--text-sub) 0px,
+                var(--text-sub) 1px,
+                transparent 1px,
+                transparent calc(100% / 9)
+            );
+            background-size: 100% 6px;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* 相手の回答用マーカー */
+        .partner-dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background-color: var(--accent-partner);
+            border: 2px solid white;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            pointer-events: none;
+        }
+
+        .partner-label-tag {
+            position: absolute;
+            background: var(--accent-partner);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            top: -12px;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        /* 選択肢（3択） */
+        .option-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .option-group input { display: none; }
+
+        .option-group label {
+            background: var(--accent-soft);
+            padding: 10px 4px;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .option-group input:checked + label {
+            background: var(--accent-main);
+            color: white;
+        }
+
+        /* 3択の相手の回答用 */
+        .partner-choice {
+            border-color: var(--accent-partner) !important;
+            color: var(--accent-partner) !important;
+            font-weight: bold;
+        }
+
+        /* 共有・比較エリア */
+        .share-box {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--accent-soft);
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-main { background: var(--accent-main); color: white; width: 100%; margin-top: 10px; }
+        .btn-copy { background: #64748b; color: white; }
+        .btn-compare { background: var(--accent-partner); color: white; width: 100%; margin-top: 10px; }
+
+        .footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-sub);
+            margin-top: 40px;
+            padding-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>✈Travel Preference List✅</h1>
+        <p style="font-size: 0.8rem; color: #718096;">旅行の価値観をすり合わせよう</p>
+    </header>
+
+    <div class="nickname-area">
+        <label for="userName">あなたのニックネーム</label>
+        <input type="text" id="userName" placeholder="例：ひなた">
+    </div>
+
+    <div class="section">
+        <div class="section-title">ホテル</div>
+        
+        <div class="item">
+            <span class="item-label">過ごし方のリズム</span>
+            <div class="slider-wrapper">
+                <span>早めにチェックイン</span>
+                <input type="range" id="hotel_rhythm" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>ギリギリまで観光</span>
+            </div>
+        </div>
+
+        <div class="item">
+            <span class="item-label">部屋の広さ</span>
+            <div class="slider-wrapper">
+                <span>こだわりたい</span>
+                <input type="range" id="room_size" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>寝るだけ</span>
+            </div>
+        </div>
+
+        <div class="item">
+            <span class="item-label">ユニットバス</span>
+            <div class="option-group">
+                <input type="radio" name="bath" id="b1" value="1"><label for="b1">全然OK</label>
+                <input type="radio" name="bath" id="b2" value="2"><label for="b2">できれば別</label>
+                <input type="radio" name="bath" id="b3" value="3"><label for="b3">絶対セパレート</label>
+            </div>
+        </div>
+
+        <div class="item">
+            <span class="item-label">寝る時の明るさ</span>
+            <div class="slider-wrapper">
+                <span>真っ暗！！</span>
+                <input type="range" id="sleep_light" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>少し光が欲しい💡</span>
+            </div>
+        </div>
+
+        <div class="item">
+            <span class="item-label">寝る時間</span>
+            <div class="slider-wrapper">
+                <span>早寝派</span>
+                <input type="range" id="sleep_time" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>夜更かし派</span>
+            </div>
+        </div>
+
+        <div class="item">
+            <span class="item-label">帰宅後、外着でベッドに座る</span>
+            <div class="option-group">
+                <input type="radio" name="bed" id="bd1" value="1"><label for="bd1">気にしない！</label>
+                <input type="radio" name="bed" id="bd2" value="2"><label for="bd2">自分はしないけど許せる</label>
+                <input type="radio" name="bed" id="bd3" value="3"><label for="bd3">できる限りやめて…</label>
+            </div>
+        </div>
+
+        <div class="item">
+            <span class="item-label">パジャマ</span>
+            <div class="option-group">
+                <input type="radio" name="pj" id="pj1" value="1"><label for="pj1">自分のを持参</label>
+                <input type="radio" name="pj" id="pj2" value="2"><label for="pj2">荷物による</label>
+                <input type="radio" name="pj" id="pj3" value="3"><label for="pj3">備え付けでOK</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">移動</div>
+        <div class="item">
+            <span class="item-label">座席のこだわり（新幹線・飛行機等）</span>
+            <div class="option-group">
+                <input type="radio" name="seat" id="s1" value="1"><label for="s1">窓側（酔い対策）</label>
+                <input type="radio" name="seat" id="s2" value="2"><label for="s2">どこでも</label>
+                <input type="radio" name="seat" id="s3" value="3"><label for="s3">通路側（トイレ）</label>
+            </div>
+        </div>
+        <div class="item">
+            <span class="item-label">徒歩15分の距離</span>
+            <div class="slider-wrapper">
+                <span>歩きたい</span>
+                <input type="range" id="move_way" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>バス・タクシー</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">食事</div>
+        <div class="item">
+            <span class="item-label">お店の選び方</span>
+            <div class="slider-wrapper">
+                <span>予約して安心したい</span>
+                <input type="range" id="shop_choose" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>その場で決めたい</span>
+            </div>
+        </div>
+        <div class="item">
+            <span class="item-label">食事の優先度</span>
+            <div class="slider-wrapper">
+                <span>地元の名物重視</span>
+                <input type="range" id="food" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>チェーンでもOK</span>
+            </div>
+        </div>
+        <div class="item">
+            <span class="item-label">一番コストカットできるのは？</span>
+            <div class="option-group">
+                <input type="radio" name="cut" id="c1" value="1"><label for="c1">食事</label>
+                <input type="radio" name="cut" id="c2" value="2"><label for="c2">ホテル</label>
+                <input type="radio" name="cut" id="c3" value="3"><label for="c3">観光・体験</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">写真・SNS</div>
+        <div class="item">
+            <span class="item-label">撮影時間</span>
+            <div class="slider-wrapper">
+                <span>じっくり派</span>
+                <input type="range" id="camera" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>サクッと派</span>
+            </div>
+        </div>
+        <div class="item">
+            <span class="item-label">楽しみ方</span>
+            <div class="slider-wrapper">
+                <span>記録したい</span>
+                <input type="range" id="enjoy" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>肉眼派</span>
+            </div>
+        </div>
+        <div class="item">
+            <span class="item-label">SNSへの顔出し投稿</span>
+            <div class="option-group">
+                <input type="radio" name="sns" id="sn1" value="1"><label for="sn1">確認を取ればOK</label>
+                <input type="radio" name="sns" id="sn2" value="2"><label for="sn2">隠せばOK</label>
+                <input type="radio" name="sns" id="sn3" value="3"><label for="sn3">NG</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">ルーティン・お金</div>
+        <div class="item">
+            <span class="item-label">休憩のタイミング</span>
+            <div class="slider-wrapper">
+                <span>こまめに休みたい</span>
+                <input type="range" id="break" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>一気に進みたい</span>
+            </div>
+        </div>
+        <div class="item">
+            <span class="item-label">朝の準備時間</span>
+            <div class="slider-wrapper">
+                <span>じっくり（1h〜）</span>
+                <input type="range" id="prepare_time" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>時短（〜30min）</span>
+            </div>
+        </div>
+
+        <div class="item">
+            <span class="item-label">朝の出発タイミング</span>
+            <div class="slider-wrapper">
+                <span>早起きして行動</span>
+                <input type="range" id="departure" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>チェックアウトギリギリ</span>
+            </div>
+        </div>
+
+        <div class="item">
+            <span class="item-label">先に起きたら</span>
+            <div class="slider-wrapper">
+                <span>絶対起こして！！</span>
+                <input type="range" id="wake_situation" min="1" max="10" step="1" value="3" list="tickmarks">
+                <span>そっとしておいて....</span>
+            </div>
+        </div>
+        <div class="item">
+            <span class="item-label">お会計</span>
+            <div class="option-group">
+                <input type="radio" name="pay" id="p1" value="1"><label for="p1">その都度割勘</label>
+                <input type="radio" name="pay" id="p2" value="2"><label for="p2">なるべく交互に支払い</label>
+                <input type="radio" name="pay" id="p3" value="3"><label for="p3">後でまとめて精算</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">共有・比較</div>
+        
+        <div class="share-box">
+            <p style="font-size: 0.8rem; font-weight: bold; margin: 0;">1. 自分のURLを発行する</p>
+            <button id="genBtn" class="btn btn-main">共有URLを生成</button>
+            <div class="input-group">
+                <input type="text" id="shareUrl" readonly placeholder="生成するとここに表示されます">
+                <button id="copyBtn" class="btn btn-copy">コピー</button>
+            </div>
+        </div>
+
+        <div class="share-box" style="margin-top: 20px;">
+            <p style="font-size: 0.8rem; font-weight: bold; margin: 0;">2. 相手のURLと比べる</p>
+            <div class="input-group">
+                <input type="text" id="partnerUrlInput" placeholder="相手のURLを貼り付け">
+            </div>
+            <button id="compareBtn" class="btn btn-compare">比較する</button>
+        </div>
+    </div>
+
+    <div class="footer">Created for Your Special Trip</div>
+</div>
+
+<datalist id="tickmarks">
+    <option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option><option value="5"></option>
+    <option value="6"></option><option value="7"></option><option value="8"></option><option value="9"></option><option value="10"></option>
+</datalist>
+
+<script>
+    // --- 1. URL生成とコピー機能 ---
+    const genBtn = document.getElementById('genBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const shareUrlInput = document.getElementById('shareUrl');
+
+    genBtn.addEventListener('click', () => {
+        const name = document.getElementById('userName').value || '匿名';
+        const params = new URLSearchParams();
+        params.append('n', name);
+
+        // スライダーの値を収集
+        document.querySelectorAll('input[type="range"]').forEach(s => {
+            if(s.id) params.append(s.id, s.value);
+        });
+        // ラジオボタンの値を収集
+        document.querySelectorAll('input[type="radio"]:checked').forEach(r => {
+            if(r.name) params.append(r.name, r.value);
+        });
+
+        const baseUrl = window.location.href.split('?')[0];
+        shareUrlInput.value = `${baseUrl}?${params.toString()}`;
+    });
+
+    copyBtn.addEventListener('click', () => {
+        if (!shareUrlInput.value) return;
+        navigator.clipboard.writeText(shareUrlInput.value);
+        copyBtn.textContent = '完了！';
+        setTimeout(() => copyBtn.textContent = 'コピー', 2000);
+    });
+
+    // --- 2. 比較機能 ---
+    const compareBtn = document.getElementById('compareBtn');
+
+    compareBtn.addEventListener('click', () => {
+        const urlText = document.getElementById('partnerUrlInput').value;
+        if (!urlText.includes('?')) return alert('正しいURLを貼り付けてください');
+
+        const params = new URLSearchParams(urlText.split('?')[1]);
+        applyComparison(params);
+    });
+
+    function applyComparison(params) {
+        const partnerName = params.get('n') || '相手';
+
+        // 既存の比較マークをクリア
+        document.querySelectorAll('.partner-dot, .partner-label-tag').forEach(el => el.remove());
+        document.querySelectorAll('.partner-choice').forEach(el => {
+            el.classList.remove('partner-choice');
+            el.innerHTML = el.innerHTML.replace(' ★', '');
+        });
+
+        // スライダーの比較
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            const val = params.get(slider.id);
+            if (val) {
+                const wrapper = slider.parentElement;
+                const percent = ((val - 1) / 9) * 100;
+                
+                // CSSの文字幅(120px)と余白(12px)を基準に、丸の位置を計算
+                const dot = document.createElement('div');
+                dot.className = 'partner-dot';
+                dot.style.left = `calc(132px + (100% - 264px) * ${percent / 100})`;
+                
+                const label = document.createElement('div');
+                label.className = 'partner-label-tag';
+                label.textContent = partnerName;
+                label.style.left = dot.style.left;
+
+                wrapper.appendChild(dot);
+                wrapper.appendChild(label);
+            }
+        });
+
+        // ラジオボタンの比較
+        document.querySelectorAll('input[type="radio"]').forEach(radio => {
+            const val = params.get(radio.name);
+            if (val && radio.value === val) {
+                const label = document.querySelector(`label[for="${radio.id}"]`);
+                if (label) {
+                    label.classList.add('partner-choice');
+                    label.innerHTML += ' ★';
+                }
+            }
+        });
+
+        alert(`${partnerName}さんの回答を読み込みました！`);
+    }
+
+    // ページ読み込み時にURLパラメータがあれば自動で比較（直接URLを開いた場合用）
+    window.addEventListener('load', () => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('n')) {
+            applyComparison(params);
+        }
+    });
+</script>
+</body>
+</html>
